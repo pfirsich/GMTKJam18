@@ -147,12 +147,15 @@ function love.draw()
                 lg.setColor(0, 0, 0, 0.3)
                 lg.rectangle("fill", leftEdge, -y*gridSize, grid.width * gridSize, gridSize)
             end
+            local textY = math.floor(-y*gridSize + gridSize/2 - markerFontH/2)
+            lg.setColor(1, 1, 1)
             if grid.lineMarker[y] then
-                lg.setColor(1, 1, 1)
                 local textAreaW = gridSize * 4
                 local textX = math.floor(leftEdge - textAreaW - gridSize)
-                local textY = math.floor(-y*gridSize + gridSize/2 - markerFontH/2)
                 lg.printf(grid.lineMarker[y], textX, textY, textAreaW - 10, "right")
+            end
+            if y % 50 == 0 then
+                lg.print("Height: " .. y, -leftEdge + gridSize + 10, textY)
             end
         end
 
