@@ -149,9 +149,10 @@ function love.draw()
             end
             if grid.lineMarker[y] then
                 lg.setColor(1, 1, 1)
-                local textX = math.floor(leftEdge - gridSize * 2.2)
+                local textAreaW = gridSize * 4
+                local textX = math.floor(leftEdge - textAreaW - gridSize)
                 local textY = math.floor(-y*gridSize + gridSize/2 - markerFontH/2)
-                lg.printf(grid.lineMarker[y], textX, textY, gridSize, "right")
+                lg.printf(grid.lineMarker[y], textX, textY, textAreaW - 10, "right")
             end
         end
 
