@@ -7,9 +7,10 @@ grid.init()
 block.spawn()
 local gridSize = 48
 local camY = gridSize * 10
+local halted = false
 
 local function isHalted()
-    return love.keyboard.isDown("space") or love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")
+    return halted or love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")
 end
 
 function love.keypressed(key)
@@ -26,11 +27,12 @@ function love.keypressed(key)
     elseif key == "right" then
         block.move(1, 0)
     elseif key == "space" then
-        paused = not paused
+        halted = not halted
     end
 end
 
 function love.update(dt)
+    grid.update(dt)
     if not isHalted() then
         block.update(dt)
         local targetCamY = math.min(block.position[2] * gridSize - 4 * gridSize, (grid.top + 5) * gridSize)
@@ -48,9 +50,20 @@ local function drawBlock(x, y, color)
                                     gridSize, gridSize)
 end
 
+local function lerp(a, b, t)
+    return a * (1 - t) + b * t
+end
+
+local function lerpColor(a, b, t)
+    local ret = {}
+    for i = 1, 3 do ret[i] = lerp(a[i], b[i], t) end
+    return ret
+end
+
 function love.draw()
     local lg = love.graphics
     local winW, winH = lg.getDimensions()
+    local fontH = lg.getFont():getHeight()
 
     lg.push()
         local leftEdge = -grid.width/2 * gridSize
@@ -68,12 +81,20 @@ function love.draw()
         for y = 1, grid.top do
             for x = 1, grid.width do
                 if grid.cells[y][x] then
-                    drawBlock(x, y, grid.cells[y][x])
+                    local color = grid.cells[y][x]
+                    if grid.lineGlow[y] > 0 then
+                        color = lerpColor(color, {1, 1, 1}, grid.lineGlow[y])
+                    end
+                    drawBlock(x, y, color)
                 end
             end
             if grid.lineDirty[y] then
                 lg.setColor(0, 0, 0, 0.3)
                 lg.rectangle("fill", leftEdge, -y*gridSize, grid.width * gridSize, gridSize)
+            end
+            if grid.lineMarker[y] then
+                lg.setColor(1, 1, 1)
+                lg.print(grid.lineMarker[y], leftEdge - gridSize * 2, -y*gridSize + gridSize/2 - fontH/2)
             end
         end
 

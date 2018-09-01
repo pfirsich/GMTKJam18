@@ -9,6 +9,8 @@ function grid.init(width)
     grid.score = 0
     grid.lineFull = {}
     grid.lineDirty = {}
+    grid.lineGlow = {}
+    grid.lineMarker = {}
 end
 
 function grid.checkBlock(block)
@@ -59,13 +61,25 @@ end
 
 function grid.calculateScore()
     grid.score = 0
+    grid.lineMarker = {}
+    local markerCounter = 0
     for y = 1, grid.top do
         assert(grid.lineFull[y] ~= nil)
         assert(grid.lineDirty[y] ~= nil)
         if grid.lineFull[y] then
             grid.score = grid.score + 1
+            markerCounter = markerCounter + 1
+            if not grid.lineFull[y+1] then
+                grid.lineMarker[y] = "+" .. markerCounter
+                markerCounter = 0
+            end
         elseif grid.lineDirty[y] then
             grid.score = grid.score - 1
+            markerCounter = markerCounter + 1
+            if not grid.lineDirty[y+1] then
+                grid.lineMarker[y] = "-" .. markerCounter
+                markerCounter = 0
+            end
         end
     end
 end
@@ -73,9 +87,8 @@ end
 function grid.addBlock(block)
     for y = 1, #block.grid do
         local gridY = block.position[2] + y
-        if not grid.cells[gridY] then
-            grid.cells[gridY] = {}
-        end
+        grid.cells[gridY] = grid.cells[gridY] or {}
+
         for x = 1, #block.grid[y] do
             local gridX = block.position[1] + x
             if block.grid[y][x] then
@@ -83,8 +96,14 @@ function grid.addBlock(block)
                 grid.cells[gridY][gridX] = block.color
             end
         end
+
         grid.top = math.max(grid.top, gridY)
+        local lastFull = grid.lineFull[gridY]
         grid.lineFull[gridY] = grid.isLineFull(gridY)
+        grid.lineGlow[gridY] = grid.lineGlow[gridY] or 0.0
+        if not lastFull and grid.lineFull[gridY] then
+            grid.lineGlow[gridY] = 1.0
+        end
     end
 
     for y = grid.top, 1, -1 do
@@ -94,6 +113,12 @@ function grid.addBlock(block)
     end
 
     grid.calculateScore()
+end
+
+function grid.update(dt)
+    for y = 1, grid.top do
+        grid.lineGlow[y] = math.max(0, grid.lineGlow[y] - dt / 1.0)
+    end
 end
 
 return grid
