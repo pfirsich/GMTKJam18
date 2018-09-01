@@ -12,8 +12,32 @@ local scoreFont = love.graphics.newFont(40)
 grid.init()
 block.spawn()
 local gridSize = 48
+local backgroundSize = 100 * gridSize
 local camY = gridSize * 10
 local halted = false
+
+local stars = {}
+for i = 1, 200 do
+    table.insert(stars, {
+        x = love.math.random(),
+        y = love.math.random(),
+        size = love.math.random(2, 7),
+    })
+end
+local starRng = love.math.newRandomGenerator()
+
+local clouds = {}
+local cloudWidth = 200
+local cloudHeight = 80
+local cloudCount = 50
+for i = 1, cloudCount do
+    table.insert(clouds, {
+        x = love.math.random() * 5.0,
+        y = (love.math.random() * 2.0 - 1.0) * 200 - backgroundSize * 0.4,
+        z = 1.0 + (1.0 - (i-1) / (cloudCount - 1)) * 4.0,
+        scale = 1.0 + love.math.random() * 1.0,
+    })
+end
 
 local function isHalted()
     return halted or love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")
@@ -40,6 +64,8 @@ function love.keypressed(key)
 end
 
 function love.update(dt)
+    local winW, winH = love.graphics.getDimensions()
+
     grid.update(dt)
     if not isHalted() then
         block.update(dt)
@@ -48,6 +74,15 @@ function love.update(dt)
     else
         local camMove = (love.keyboard.isDown("w") and 1 or 0) - (love.keyboard.isDown("s") and 1 or 0)
         camY = camY + camMove * gridSize * 10 * dt
+    end
+    camY = math.max(camY, winH/2 - gridSize)
+
+    for i = 1, #clouds do
+        local cloud = clouds[i]
+        cloud.x = cloud.x + 0.1 * dt
+        if cloud.x / cloud.z > 1.0 then
+            cloud.x = -cloudWidth * cloud.z * cloud.scale / winW
+        end
     end
 end
 
@@ -76,23 +111,12 @@ local function lerpColor(a, b, t)
     return ret
 end
 
-local stars = {}
-for i = 1, 200 do
-    table.insert(stars, {
-        x = love.math.random(),
-        y = love.math.random(),
-        size = love.math.random(2, 7),
-    })
-end
-local starRng = love.math.newRandomGenerator()
-
 function love.draw()
     local lg = love.graphics
     local winW, winH = lg.getDimensions()
     local markerFontH = markerFont:getHeight()
 
-    local drawCamY = math.floor(math.max(winH/2 + camY, winH - gridSize) + 0.5)
-    local backgroundSize = 100 * gridSize
+    local drawCamY = math.floor(winH/2 + camY + 0.5)
 
     local atmosphereTop = drawCamY - backgroundSize
     starRng:setSeed(42 + drawCamY)
@@ -116,6 +140,7 @@ function love.draw()
         local leftEdge = -grid.width/2 * gridSize
         lg.translate(winW/2, drawCamY)
 
+        -- draw background
         lg.push()
             local imgW, imgH = backgroundImage:getDimensions()
             lg.translate(-winW/2, gridSize)
@@ -123,6 +148,17 @@ function love.draw()
             lg.setColor(1, 1, 1)
             lg.draw(backgroundImage, 0, -imgH)
         lg.pop()
+
+        -- draw other background elements (clouds)
+        for i = 1, #clouds do
+            local cloud = clouds[i]
+            lg.setColor(lerpColor({1, 1, 1, 0.9}, {0.8, 0.8, 1.0, 0.9}, (cloud.z - 1.0) / 1.0))
+            local x, y = (cloud.x / cloud.z - 0.5) * winW, -camY + (cloud.y + camY) / cloud.z
+            local w, h = cloudWidth / cloud.z * cloud.scale, cloudHeight / cloud.z * cloud.scale
+            lg.rectangle("fill", x, y, w, h)
+            --local offset = h * 0.5
+            --lg.rectangle("fill", x + offset, y - offset, w - 2*offset, h + 2*offset)
+        end
 
         -- draw borders
         lg.setColor(0.2, 0.2, 0.2, 1.0)
