@@ -71,7 +71,12 @@ function grid.calculateScore()
             grid.score = grid.score + 1
             markerCounter = markerCounter + 1
             if not grid.lineFull[y+1] then
+                local tetrisBonus = math.floor(markerCounter / 4)
+                grid.score = grid.score + tetrisBonus
                 grid.lineMarker[y] = "+" .. markerCounter
+                if tetrisBonus > 0 then
+                    grid.lineMarker[y] = grid.lineMarker[y] .. " (+" .. tetrisBonus .. ")"
+                end
                 markerCounter = 0
             end
         elseif grid.lineDirty[y] then
