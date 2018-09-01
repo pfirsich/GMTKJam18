@@ -48,6 +48,10 @@ local layouts = {
          {0, 0, 1}},
 }
 
+local dropSpeeds = {1.0, 0.7, 0.5, 0.35, 0.2}
+block.dropSpeed = 3
+block.maxDropSpeed = #dropSpeeds
+
 -- convert integers to bools (I use 0/1 up there because it fits better and looks nicer)
 for letter, blockGrid in pairs(layouts) do
     for y = 1, #blockGrid do
@@ -66,8 +70,20 @@ function block.spawn(letter, posY)
     local letterWidth = #block.grid[1]
     block.position = {math.floor(grid.width/2 - letterWidth/2), posY}
     block.color = colors[letter]
-    block.stepInterval = 0.5
     block.nextStep = 0
+    block.updateDropPos()
+end
+
+function block.updateDropPos()
+    local dropPos = block.position[2]
+    for y = dropPos, 0, -1 do
+        if grid.checkBlock(block, {block.position[1], dropPos - 1}) then
+            dropPos = dropPos - 1
+        else
+            break
+        end
+    end
+    block.dropPos = dropPos
 end
 
 local function rotatedGrid(grid, dir)
@@ -95,6 +111,7 @@ function block.rotate()
         for dir = -1, 1, 2 do -- wiggle direction
             block.position[1] = prePosX + dir * dx
             if grid.checkBlock(block) then
+                block.updateDropPos()
                 return true
             end
         end
@@ -110,22 +127,27 @@ function block.move(dx, dy)
     block.position = {oldPos[1] + dx, oldPos[2] + dy}
     if not grid.checkBlock(block) then
         block.position = oldPos
+        if dx == 0 and dy == -1 then
+            grid.addBlock(block)
+            block.spawn()
+        end
         return false
     end
+    block.updateDropPos()
     return true
+end
+
+function block.drop()
+    block.position[2] = block.dropPos
+    block.move(0, -1)
 end
 
 function block.update(dt)
     local fastFall = love.keyboard.isDown("down")
     block.nextStep = block.nextStep - (fastFall and 5.0 or 1.0) * dt
     if block.nextStep < 0.0 then
-        block.nextStep = 0.5
-
-        if not block.move(0, -1) then
-            -- hit something
-            grid.addBlock(block)
-            block.spawn()
-        end
+        block.nextStep = dropSpeeds[block.dropSpeed]
+        block.move(0, -1)
     end
 end
 

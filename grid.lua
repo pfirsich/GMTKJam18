@@ -13,11 +13,12 @@ function grid.init(width)
     grid.lineMarker = {}
 end
 
-function grid.checkBlock(block)
+function grid.checkBlock(block, position)
+    position = position or block.position
     for y = 1, #block.grid do
-        local gridY = block.position[2] + y
+        local gridY = position[2] + y
         for x = 1, #block.grid[y] do
-            local gridX = block.position[1] + x
+            local gridX = position[1] + x
             if block.grid[y][x] and (grid.cells[gridY] and grid.cells[gridY][gridX] or
                     gridX < 1 or gridX > grid.width or gridY < 1) then
                 return false
