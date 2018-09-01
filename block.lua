@@ -3,7 +3,8 @@ local grid = require("grid")
 -- this is the currently falling block
 local block = {}
 
-block.letters = {"I", "O", "T", "S", "Z", "J", "L"}
+local letters = {"I", "O", "T", "S", "Z", "J", "L"}
+local nextLetterIndex = 1
 
 local colors = {
     I = {0.0, 1.0, 1.0},
@@ -61,9 +62,25 @@ for letter, blockGrid in pairs(layouts) do
     end
 end
 
+local function randomizeList(list, start)
+    for i = 1, #list - 1 do
+        local j = love.math.random(i + 1, #list)
+        list[i], list[j] = list[j], list[i]
+    end
+end
+
 function block.spawn(letter, posY)
-    letter = letter or block.letters[love.math.random(1, #block.letters)]
     posY = posY or grid.top + 8
+    if not letter then
+        if nextLetterIndex == 1 then
+            randomizeList(letters)
+        end
+        letter = letters[nextLetterIndex]
+        nextLetterIndex = nextLetterIndex + 1
+        if nextLetterIndex > #letters then
+            nextLetterIndex = 1
+        end
+    end
 
     block.letter = letter
     block.grid = layouts[letter]
@@ -111,6 +128,7 @@ function block.rotate()
         for dir = -1, 1, 2 do -- wiggle direction
             block.position[1] = prePosX + dir * dx
             if grid.checkBlock(block) then
+                block.resetStepClock()
                 block.updateDropPos()
                 return true
             end
@@ -142,11 +160,15 @@ function block.drop()
     block.move(0, -1)
 end
 
+function block.resetStepClock()
+    block.nextStep = dropSpeeds[block.dropSpeed]
+end
+
 function block.update(dt)
     local fastFall = love.keyboard.isDown("down")
     block.nextStep = block.nextStep - (fastFall and 5.0 or 1.0) * dt
     if block.nextStep < 0.0 then
-        block.nextStep = dropSpeeds[block.dropSpeed]
+        block.resetStepClock()
         block.move(0, -1)
     end
 end
