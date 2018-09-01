@@ -34,7 +34,26 @@ function grid.isLineFull(y)
     return true
 end
 
-function grid.isLineDirty(y)
+local function floodFillToTop(x, y, visited)
+    -- not a valid cell if out of bounds, visited or a filled grid cell
+    if x < 1 or x > grid.width or y < 1 or (visited[y] and visited[y][x]) or grid.cells[y][x] then
+        return false
+    end
+    if y == grid.top then
+        return true
+    end
+    visited[y] = visited[y] or {}
+    visited[y][x] = true
+    return floodFillToTop(x+1, y, visited) or floodFillToTop(x-1, y, visited)
+        or floodFillToTop(x, y+1, visited) or floodFillToTop(x, y-1, visited)
+end
+
+function grid.isLineDirty(y, visited)
+    for x = 1, grid.width do
+        if not grid.cells[y][x] and not floodFillToTop(x, y, {}) then
+            return true
+        end
+    end
     return false
 end
 
@@ -66,8 +85,14 @@ function grid.addBlock(block)
         end
         grid.top = math.max(grid.top, gridY)
         grid.lineFull[gridY] = grid.isLineFull(gridY)
-        grid.lineDirty[gridY] = grid.isLineDirty(gridY)
     end
+
+    for y = grid.top, 1, -1 do
+        if not grid.lineFull[y] and not grid.lineDirty[y] then
+            grid.lineDirty[y] = grid.isLineDirty(y)
+        end
+    end
+
     grid.calculateScore()
 end
 
