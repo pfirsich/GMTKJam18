@@ -3,6 +3,8 @@ inspect = require("inspect")
 local grid = require("grid")
 local block = require("block")
 
+local backgroundImage = require("gradient")
+
 grid.init()
 block.spawn()
 local gridSize = 48
@@ -68,7 +70,14 @@ function love.draw()
     lg.push()
         local leftEdge = -grid.width/2 * gridSize
         local y = math.max(winH/2 + camY, winH - gridSize)
-        lg.translate(winW/2, y)
+        lg.translate(winW/2, math.floor(y + 0.5))
+
+        lg.push()
+            local imgW, imgH = backgroundImage:getDimensions()
+            lg.translate(-winW/2, gridSize)
+            lg.scale(winW / imgW, 100.0 * gridSize / imgH)
+            lg.draw(backgroundImage, 0, -imgH)
+        lg.pop()
 
         -- draw borders
         lg.setColor(0.2, 0.2, 0.2, 1.0)
