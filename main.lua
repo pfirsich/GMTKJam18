@@ -7,10 +7,13 @@ grid.init()
 block.spawn()
 local gridSize = 48
 local camY = gridSize * 10
-local paused = false
+
+local function isHalted()
+    return love.keyboard.isDown("space") or love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")
+end
 
 function love.keypressed(key)
-    if not paused then
+    if not isHalted() then
         if key == "up" then
             block.rotate()
         elseif key == "down" then
@@ -28,9 +31,9 @@ function love.keypressed(key)
 end
 
 function love.update(dt)
-    if not paused then
+    if not isHalted() then
         block.update(dt)
-        local targetCamY = math.min(block.position[2] * gridSize, (grid.top + 5) * gridSize)
+        local targetCamY = math.min(block.position[2] * gridSize - 4 * gridSize, (grid.top + 5) * gridSize)
         camY = camY + (targetCamY - camY) * 1.0 * dt
     else
         local camMove = (love.keyboard.isDown("up") and 1 or 0) - (love.keyboard.isDown("down") and 1 or 0)
