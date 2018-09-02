@@ -70,13 +70,15 @@ function menu.draw()
 
     lg.setFont(creditFont)
     local creditFontH = creditFont:getHeight()
-    shadowText(credits, 10, winH - creditFontH * 2 - 10, 1)
+    local creditsY = math.floor(winH - creditFontH * 2 - 10)
+    shadowText(credits, 10, creditsY, 1)
 
-    shadowTextFRight("F11 to toggle fullscreen", 0, winH - creditFontH - 10, winW - 10, 1)
+    local toggleY = math.floor(winH - creditFontH - 10)
+    shadowTextFRight("F11 to toggle fullscreen", 0, toggleY, winW - 10, 1)
 
     local deltaRead = controlReadPercent()
     local startGameFontH = startGameFont:getHeight()
-    local startTextY = winH - creditFontH * 3 - startGameFontH
+    local startTextY = math.floor(winH - creditFontH * 3 - startGameFontH)
     if deltaRead > 1.0 then
         lg.setFont(startGameFont)
         local show = math.cos(love.timer.getTime() * 2.0 * math.pi) > 0.5

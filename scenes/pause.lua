@@ -44,19 +44,19 @@ function pause.draw()
     lg.setFont(pauseFont)
 
     local fontH = pauseFont:getHeight()
-    local w = winW / 3
-    local h = fontH * 3
-    local x = winW/2 - w/2
-    local y = winH/2 - h/2
+    local w = math.floor(winW / 3)
+    local h = math.floor(fontH * 3)
+    local x = math.floor(winW/2 - w/2)
+    local y = math.floor(winH/2 - h/2)
 
     lg.setColor(0, 0, 0, 0.3)
     lg.rectangle("fill", x, y, w, h)
     lg.setColor(1, 1, 1)
     if quitReally then
-        lg.printf("Really Quit?", x, winH/2 - fontH/2, w, "center")
+        lg.printf("Really Quit?", x, math.floor(winH/2 - fontH/2), w, "center")
     else
-        lg.printf("<RETURN> to Resume", x, winH/2 - fontH, w, "center")
-        lg.printf("<ESCAPE> to Quit", x, winH/2, w, "center")
+        lg.printf("<RETURN> to Resume", x, math.floor(winH/2 - fontH), w, "center")
+        lg.printf("<ESCAPE> to Quit", x, math.floor(winH/2), w, "center")
     end
 end
 
