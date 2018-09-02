@@ -71,13 +71,6 @@ function grid.calculateScore()
                 end
                 markerCounter = 0
             end
-        elseif grid.lineDirty[y] then
-            grid.score = grid.score - 1
-            markerCounter = markerCounter + 1
-            if not grid.lineDirty[y+1] then
-                grid.lineMarker[y] = "-" .. markerCounter
-                markerCounter = 0
-            end
         end
     end
     grid.lineMarkersDirty = true

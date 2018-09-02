@@ -354,7 +354,7 @@ function game.draw(_camY, hideScoreText)
             end
 
             if grid.lineDirty[y] then
-                lg.setColor(0, 0, 0, 0.3)
+                lg.setColor(0, 0, 0, 0.2)
                 lg.rectangle("fill", leftEdge, -y*gridSize, grid.width * gridSize, gridSize)
             end
 
