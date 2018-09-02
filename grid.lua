@@ -1,3 +1,5 @@
+local sounds = require("sounds")
+
 local grid = {}
 
 function grid.init(width)
@@ -91,6 +93,8 @@ function grid.calculateScore()
 end
 
 function grid.addBlock(block)
+    local playLineFull, playLineDirty = false, false
+
     for y = 1, #block.grid do
         local gridY = block.position[2] + y
         grid.cells[gridY] = grid.cells[gridY] or {}
@@ -109,14 +113,21 @@ function grid.addBlock(block)
         grid.lineGlow[gridY] = grid.lineGlow[gridY] or 0.0
         if not lastFull and grid.lineFull[gridY] then
             grid.lineGlow[gridY] = 1.0
+            playLineFull = true
         end
     end
 
     for y = grid.top, 1, -1 do
         if not grid.lineFull[y] and not grid.lineDirty[y] then
             grid.lineDirty[y] = grid.isLineDirty(y)
+            if grid.lineDirty[y] then
+                playLineDirty = true
+            end
         end
     end
+
+    if playLineFull then sounds.lineFull:play() end
+    if playLineDirty then sounds.lineDirty:play() end
 
     grid.calculateScore()
 end

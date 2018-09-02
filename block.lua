@@ -1,4 +1,5 @@
 local grid = require("grid")
+local sounds = require("sounds")
 
 -- this is the currently falling block
 local block = {}
@@ -93,7 +94,7 @@ end
 
 function block.updateDropPos()
     local dropPos = block.position[2]
-    for y = dropPos, 0, -1 do
+    for y = dropPos, -1, -1 do
         if grid.checkBlock(block, {block.position[1], dropPos - 1}) then
             dropPos = dropPos - 1
         else
@@ -148,6 +149,7 @@ function block.move(dx, dy)
         if dx == 0 and dy == -1 then
             grid.addBlock(block)
             block.spawn()
+            sounds.drop:play()
         end
         return false
     end

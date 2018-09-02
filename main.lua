@@ -2,19 +2,37 @@ inspect = require("inspect")
 
 local grid = require("grid")
 local block = require("block")
+local sounds = require("sounds")
+
+local gridSize = 48
+local backgroundSize = 100 * gridSize
+local camY = gridSize * 10
+local halted = false
 
 local backgroundImageData = require("gradient")
 local backgroundImage = love.graphics.newImage(backgroundImageData)
+
+local tetrisRocket = love.graphics.newImage("media/tetris_rocket.png")
+tetrisRocket:setFilter("nearest", "nearest")
+local fireFrames = {}
+for i = 1, 2 do
+    fireFrames[i] = love.graphics.newImage(("media/tetris_rocket_fire_%d.png"):format(i))
+    fireFrames[i]:setFilter("nearest", "nearest")
+end
+local rocketHeight = backgroundSize * 1.5
+local rocketPosition = nil
+local rocketAngle = 0.1 * math.pi
+
+local ufoHeight = backgroundSize * 1.25
+local ufoPosition = nil
+
+local moonHeight = backgroundSize * 0.96
 
 local markerFont = love.graphics.newFont(24)
 local scoreFont = love.graphics.newFont(40)
 
 grid.init()
 block.spawn()
-local gridSize = 48
-local backgroundSize = 100 * gridSize
-local camY = gridSize * 10
-local halted = false
 
 local randf = function(lo, hi)
     lo = lo or 0
@@ -64,13 +82,21 @@ end
 
 function love.keypressed(key)
     if key == "up" or key == "x" then
-        block.rotate()
+        if block.rotate() then
+            sounds.move:play()
+        end
     elseif key == "down" then
-        block.move(0, -1)
+        if block.move(0, -1) then
+            sounds.move:play()
+        end
     elseif key == "left" then
-        block.move(-1, 0)
+        if block.move(-1, 0) then
+            sounds.move:play()
+        end
     elseif key == "right" then
-        block.move(1, 0)
+        if block.move(1, 0) then
+            sounds.move:play()
+        end
     elseif key == "space" then
         halted = not halted
     elseif key == "lctrl" or key == "rctrl" then
@@ -92,9 +118,28 @@ function love.update(dt)
         camY = camY + (targetCamY - camY) * 1.0 * dt
     else
         local camMove = (love.keyboard.isDown("w") and 1 or 0) - (love.keyboard.isDown("s") and 1 or 0)
-        camY = camY + camMove * gridSize * 10 * dt
+        camY = camY + camMove * gridSize * 15 * dt
     end
     camY = math.max(camY, winH/2 - gridSize)
+
+    if camY > ufoHeight and not ufoPosition then
+        ufoPosition = winW/2
+        sounds.ufo:play()
+    end
+    if ufoPosition then
+        ufoPosition = ufoPosition - winW/2.5 * dt
+    end
+
+    if camY > rocketHeight and not rocketPosition then
+        rocketPosition = -winW/2 - 200
+        sounds.rocket:play()
+    end
+    if rocketPosition then
+        local xVel = winW/3.0
+        local speed = xVel / math.cos(rocketAngle)
+        rocketPosition = rocketPosition + xVel * dt
+        rocketHeight = rocketHeight + math.sin(rocketAngle) * speed * dt
+    end
 
     for i = 1, #clouds do
         local cloud = clouds[i]
@@ -186,17 +231,50 @@ function love.draw()
         end
 
         -- moon
-        love.graphics.setColor(0.6, 0.6, 0.6)
-        local moonX = -leftEdge + 100
-        local moonY = -backgroundSize * 1.25
-        love.graphics.rectangle("fill", moonX - 25, moonY + 25, 350, 250)
-        love.graphics.rectangle("fill", moonX + 25, moonY - 25, 250, 350)
-        love.graphics.setColor(0.3, 0.3, 0.3)
-        love.graphics.rectangle("fill", moonX + 50, moonY + 50, 100, 100)
-        love.graphics.rectangle("fill", moonX + 90, moonY + 100, 80, 80)
-        love.graphics.rectangle("fill", moonX + 140, moonY + 50, 50, 50)
-        love.graphics.rectangle("fill", moonX + 40, moonY + 50, 40, 200)
-        love.graphics.rectangle("fill", moonX + 200, moonY + 200, 50, 50)
+        lg.setColor(0.6, 0.6, 0.6)
+        lg.push()
+            local moonZ = 1.5
+            lg.translate(-leftEdge + 100, -moonHeight / moonZ - camY * (1 - 1/moonZ))
+            lg.rectangle("fill", -25, 25, 350, 250)
+            lg.rectangle("fill", 25, -25, 250, 350)
+            lg.setColor(0.3, 0.3, 0.3)
+            lg.rectangle("fill", 50, 50, 100, 100)
+            lg.rectangle("fill", 90, 100, 80, 80)
+            lg.rectangle("fill", 140, 50, 50, 50)
+            lg.rectangle("fill", 40, 50, 40, 200)
+            lg.rectangle("fill", 200, 200, 50, 50)
+        lg.pop()
+
+        -- ufo
+        if ufoPosition then
+            local ufoY = -backgroundSize * 0.2
+            lg.push()
+                lg.translate(ufoPosition, -ufoHeight)
+                lg.rotate(-0.1 * math.pi)
+                lg.setColor(0.8, 0.8, 0.8) -- disc
+                lg.rectangle("fill", 0, 0, 300, 60)
+                lg.rectangle("fill", 20, -20, 260, 100)
+                lg.setColor(0.2, 0.7, 0.2) -- alien
+                lg.rectangle("fill", 150 - 20, -40, 40, 20)
+                lg.rectangle("fill", 150 - 10, -60, 20, 20)
+                lg.setColor(0.5, 0.5, 1.0, 0.7) -- window
+                lg.rectangle("fill", 40, -40, 220, 30)
+                lg.rectangle("fill", 50, -70, 200, 30)
+            lg.pop()
+        end
+
+        -- rocket
+        if rocketPosition then
+            lg.push()
+                lg.translate(rocketPosition, -rocketHeight)
+                lg.rotate(-rocketAngle + math.pi * 0.5)
+                lg.scale(3)
+                lg.setColor(1, 1, 1)
+                local fireFrame = fireFrames[(love.timer.getTime() % 0.5) > 0.25 and 1 or 2]
+                lg.draw(tetrisRocket, 0, 0, 0, 1, 1, tetrisRocket:getWidth()/2, tetrisRocket:getHeight()/2)
+                lg.draw(fireFrame, 0, tetrisRocket:getHeight()/2, 0, 1, 1, fireFrame:getWidth()/2, 0)
+            lg.pop()
+        end
 
         -- draw borders
         lg.setColor(0.2, 0.2, 0.2, 1.0)
