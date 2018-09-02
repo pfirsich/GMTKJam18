@@ -16,6 +16,15 @@ local backgroundSize = 100 * gridSize
 local camY = gridSize * 10
 local halted = false
 
+local randf = function(lo, hi)
+    lo = lo or 0
+    hi = hi or 1
+    return lo + love.math.random() * (hi - lo)
+end
+local jitter = function(minMag, maxMag)
+    return (randf() > 0.5 and 1 or -1) * randf(minMag, maxMag)
+end
+
 local stars = {}
 for i = 1, 200 do
     table.insert(stars, {
@@ -26,17 +35,27 @@ for i = 1, 200 do
 end
 local starRng = love.math.newRandomGenerator()
 
+local cloudDebugColors = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}
 local clouds = {}
 local cloudWidth = 200
 local cloudHeight = 80
-local cloudCount = 50
+local cloudCount = 25
+local winW = love.graphics.getWidth()
 for i = 1, cloudCount do
-    table.insert(clouds, {
-        x = love.math.random() * 5.0,
-        y = (love.math.random() * 2.0 - 1.0) * 200 - backgroundSize * 0.4,
-        z = 1.0 + (1.0 - (i-1) / (cloudCount - 1)) * 4.0,
-        scale = 1.0 + love.math.random() * 1.0,
-    })
+    local z = 1.0 + (1.0 - (i-1) / (cloudCount - 1)) * 4.0
+    local x = randf() * winW * z
+    local y = randf(-1, 1) * 200 - backgroundSize * 0.4
+    for j = 1, 3 do
+        local w, h = randf(1.0, 2.0) * cloudWidth, randf(1.0, 2.0) * cloudHeight
+        table.insert(clouds, {
+            debugColor = cloudDebugColors[j],
+            x = x, y = y, z = z,
+            w = w, h = h
+        })
+        -- shift slightly
+        x = x + cloudWidth * jitter(0.5, 0.9)
+        y = y + cloudHeight * jitter(0.5, 0.9)
+    end
 end
 
 local function isHalted()
@@ -79,9 +98,9 @@ function love.update(dt)
 
     for i = 1, #clouds do
         local cloud = clouds[i]
-        cloud.x = cloud.x + 0.1 * dt
-        if cloud.x / cloud.z > 1.0 then
-            cloud.x = -cloudWidth * cloud.z * cloud.scale / winW
+        cloud.x = cloud.x + 200 * dt
+        if cloud.x / cloud.z > winW then
+            cloud.x = cloud.x - winW * cloud.z * 1.2
         end
     end
 end
@@ -152,9 +171,13 @@ function love.draw()
         -- draw other background elements (clouds)
         for i = 1, #clouds do
             local cloud = clouds[i]
-            lg.setColor(lerpColor({1, 1, 1, 0.9}, {0.8, 0.8, 1.0, 0.9}, (cloud.z - 1.0) / 1.0))
-            local x, y = (cloud.x / cloud.z - 0.5) * winW, -camY + (cloud.y + camY) / cloud.z
-            local w, h = cloudWidth / cloud.z * cloud.scale, cloudHeight / cloud.z * cloud.scale
+            local cloudAlpha = 1.0
+            lg.setColor(lerpColor({1, 1, 1, cloudAlpha}, {0.8, 0.8, 1.0, cloudAlpha}, (cloud.z - 1.0) / 1.0))
+            --lg.setColor(cloud.debugColor)
+            local x = cloud.x / cloud.z - winW/2
+            local y = -camY + (cloud.y + camY) / cloud.z
+            local h = cloud.h / cloud.z
+            local w = cloud.w / cloud.z
             lg.rectangle("fill", x, y, w, h)
             --local offset = h * 0.5
             --lg.rectangle("fill", x + offset, y - offset, w - 2*offset, h + 2*offset)
