@@ -63,7 +63,7 @@ local function isHalted()
 end
 
 function love.keypressed(key)
-    if key == "up" then
+    if key == "up" or key == "x" then
         block.rotate()
     elseif key == "down" then
         block.move(0, -1)
