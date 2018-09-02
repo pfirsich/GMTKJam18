@@ -39,27 +39,16 @@ function grid.isLineFull(y)
     return true
 end
 
-local function floodFillToTop(x, y, visited)
+local function floodFill(x, y, visited)
     -- not a valid cell if out of bounds, visited or a filled grid cell
-    if x < 1 or x > grid.width or y < 1 or (visited[y] and visited[y][x]) or grid.cells[y][x] then
+    if x < 1 or x > grid.width or y < 1 or y > grid.top or
+            (visited[y] and visited[y][x]) or grid.cells[y][x] then
         return false
-    end
-    if y == grid.top then
-        return true
     end
     visited[y] = visited[y] or {}
     visited[y][x] = true
-    return floodFillToTop(x+1, y, visited) or floodFillToTop(x-1, y, visited)
-        or floodFillToTop(x, y+1, visited) or floodFillToTop(x, y-1, visited)
-end
-
-function grid.isLineDirty(y, visited)
-    for x = 1, grid.width do
-        if not grid.cells[y][x] and not floodFillToTop(x, y, {}) then
-            return true
-        end
-    end
-    return false
+    return floodFill(x+1, y, visited) or floodFill(x-1, y, visited)
+        or floodFill(x, y+1, visited) or floodFill(x, y-1, visited)
 end
 
 function grid.calculateScore()
@@ -117,11 +106,24 @@ function grid.addBlock(block)
         end
     end
 
-    for y = grid.top, 1, -1 do
+    local visited = {}
+    -- fill reachability from every empty block in the top row
+    for x = 1, grid.width do
+        if not grid.cells[grid.top][x] then
+            floodFill(x, grid.top, visited)
+        end
+    end
+
+    for y = 1, grid.top do
         if not grid.lineFull[y] and not grid.lineDirty[y] then
-            grid.lineDirty[y] = grid.isLineDirty(y)
-            if grid.lineDirty[y] then
-                playLineDirty = true
+            grid.lineDirty[y] = false
+            -- check if any empty block in the line is not reachable
+            for x = 1, grid.width do
+                if not grid.cells[y][x] and (not visited[y] or not visited[y][x]) then
+                    grid.lineDirty[y] = true
+                    playLineDirty = true
+                    break
+                end
             end
         end
     end
