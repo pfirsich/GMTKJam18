@@ -1,7 +1,3 @@
-* resolution independence
-* controls-screen / ui
-* readme - jkx feat. Flipso (Jan & Philipp Koerver)
-
 # Stretch goals
 * minimap/zoomout
 * gamepad support
