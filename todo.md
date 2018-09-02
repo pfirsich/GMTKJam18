@@ -1,5 +1,4 @@
 # Stretch goals
-* ijkl
 * minimap/zoomout
 * gamepad support
 * ufo -> glitch shader

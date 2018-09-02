@@ -120,19 +120,19 @@ function game.resize(w, h)
 end
 
 function game.keypressed(key)
-    if key == "up" or key == "x" then
+    if key == "up" or key == "x" or key == "i" then
         if block.rotate() then
             sounds.move:play()
         end
-    elseif key == "down" then
+    elseif key == "down" or key == "k" then
         if block.move(0, -1) then
             sounds.move:play()
         end
-    elseif key == "left" then
+    elseif key == "left" or key == "j" then
         if block.move(-1, 0) then
             sounds.move:play()
         end
-    elseif key == "right" then
+    elseif key == "right" or key == "l" then
         if block.move(1, 0) then
             sounds.move:play()
         end
