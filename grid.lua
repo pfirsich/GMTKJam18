@@ -13,6 +13,7 @@ function grid.init(width)
     grid.lineDirty = {}
     grid.lineGlow = {}
     grid.lineMarker = {}
+    grid.lineMarkersDirty = true
 end
 
 function grid.checkBlock(block, position)
@@ -79,6 +80,7 @@ function grid.calculateScore()
             end
         end
     end
+    grid.lineMarkersDirty = true
 end
 
 function grid.addBlock(block)

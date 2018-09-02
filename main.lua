@@ -31,6 +31,10 @@ local moonHeight = backgroundSize * 0.96
 local markerFont = love.graphics.newFont(24)
 local scoreFont = love.graphics.newFont(40)
 
+local scoreMarkerText = love.graphics.newText(markerFont)
+local heightMarkerText = love.graphics.newText(markerFont)
+local heightMarkerInText = {}
+
 grid.init()
 block.spawn()
 
@@ -284,7 +288,19 @@ function love.draw()
         lg.rectangle("fill", -leftEdge, -wallHeight, gridSize, wallHeight)
 
         -- draw grid
-        lg.setFont(markerFont)
+        if grid.lineMarkersDirty then
+            scoreMarkerText:clear()
+            for y = 1, grid.top do
+                if grid.lineMarker[y] then
+                    local textAreaW = gridSize * 4
+                    local textX = math.floor(leftEdge - textAreaW - gridSize)
+                    local textY = math.floor(-y*gridSize + gridSize/2 - markerFontH/2)
+                    scoreMarkerText:addf(grid.lineMarker[y], textAreaW - 10, "right", textX, textY)
+                end
+            end
+            grid.lineMarkersDirty = false
+        end
+
         for y = 1, grid.top do
             for x = 1, grid.width do
                 if grid.cells[y][x] then
@@ -295,21 +311,22 @@ function love.draw()
                     drawBlock(x, y, color)
                 end
             end
+
             if grid.lineDirty[y] then
                 lg.setColor(0, 0, 0, 0.3)
                 lg.rectangle("fill", leftEdge, -y*gridSize, grid.width * gridSize, gridSize)
             end
-            local textY = math.floor(-y*gridSize + gridSize/2 - markerFontH/2)
-            lg.setColor(1, 1, 1)
-            if grid.lineMarker[y] then
-                local textAreaW = gridSize * 4
-                local textX = math.floor(leftEdge - textAreaW - gridSize)
-                lg.printf(grid.lineMarker[y], textX, textY, textAreaW - 10, "right")
-            end
-            if y % 50 == 0 then
-                lg.print("Height: " .. y, -leftEdge + gridSize + 10, textY)
+
+            if y % 50 == 0 and not heightMarkerInText[y] then
+                local textY = math.floor(-y*gridSize + gridSize/2 - markerFontH/2)
+                heightMarkerText:add("Height: " .. y, math.floor(-leftEdge + gridSize + 10), textY)
+                heightMarkerInText[y] = true
             end
         end
+
+        lg.setColor(1, 1, 1)
+        love.graphics.draw(scoreMarkerText)
+        love.graphics.draw(heightMarkerText)
 
         -- draw shadow
         -- local shadowLerp = clamp((camY - backgroundSize * 0.6) / (backgroundSize * 0.1))
