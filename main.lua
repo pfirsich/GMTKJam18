@@ -106,10 +106,11 @@ function love.update(dt)
 end
 
 local function drawBlock(x, y, color)
+    local x, y = -grid.width/2 * gridSize + (x-1) * gridSize, -y*gridSize
     love.graphics.setColor(color)
-    love.graphics.rectangle("fill", -grid.width/2 * gridSize + (x-1) * gridSize,
-                                    -y*gridSize,
-                                    gridSize, gridSize)
+    love.graphics.rectangle("fill", x, y, gridSize, gridSize)
+    --love.graphics.setColor(0, 0, 0)
+    --love.graphics.rectangle("fill", x + 2, y + 2, gridSize - 4, gridSize - 4)
 end
 
 local function clamp(x, lo, hi)
@@ -168,7 +169,8 @@ function love.draw()
             lg.draw(backgroundImage, 0, -imgH)
         lg.pop()
 
-        -- draw other background elements (clouds)
+        -- draw other background elements
+        -- clouds
         for i = 1, #clouds do
             local cloud = clouds[i]
             local cloudAlpha = 1.0
@@ -182,6 +184,19 @@ function love.draw()
             --local offset = h * 0.5
             --lg.rectangle("fill", x + offset, y - offset, w - 2*offset, h + 2*offset)
         end
+
+        -- moon
+        love.graphics.setColor(0.6, 0.6, 0.6)
+        local moonX = -leftEdge + 100
+        local moonY = -backgroundSize * 1.25
+        love.graphics.rectangle("fill", moonX - 25, moonY + 25, 350, 250)
+        love.graphics.rectangle("fill", moonX + 25, moonY - 25, 250, 350)
+        love.graphics.setColor(0.3, 0.3, 0.3)
+        love.graphics.rectangle("fill", moonX + 50, moonY + 50, 100, 100)
+        love.graphics.rectangle("fill", moonX + 90, moonY + 100, 80, 80)
+        love.graphics.rectangle("fill", moonX + 140, moonY + 50, 50, 50)
+        love.graphics.rectangle("fill", moonX + 40, moonY + 50, 40, 200)
+        love.graphics.rectangle("fill", moonX + 200, moonY + 200, 50, 50)
 
         -- draw borders
         lg.setColor(0.2, 0.2, 0.2, 1.0)
