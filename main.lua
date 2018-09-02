@@ -4,9 +4,10 @@ local grid = require("grid")
 local block = require("block")
 local sounds = require("sounds")
 
-local gridSize = 48
+local drawScale = 1
+local gridSize = 40
 local backgroundSize = 100 * gridSize
-local camY = gridSize * 10
+local camY = 0
 local halted = false
 
 local backgroundImageData = require("gradient")
@@ -25,8 +26,6 @@ local rocketAngle = 0.1 * math.pi
 
 local ufoHeight = backgroundSize * 1.25
 local ufoPosition = nil
-
-local moonHeight = backgroundSize * 0.96
 
 local markerFont = love.graphics.newFont(24)
 local scoreFont = love.graphics.newFont(40)
@@ -66,7 +65,7 @@ local winW = love.graphics.getWidth()
 for i = 1, cloudCount do
     local z = 1.0 + (1.0 - (i-1) / (cloudCount - 1)) * 4.0
     local x = randf() * winW * z
-    local y = randf(-1, 1) * 200 - backgroundSize * 0.4
+    local y = randf(-1, 1) * 200
     for j = 1, 3 do
         local w, h = randf(1.0, 2.0) * cloudWidth, randf(1.0, 2.0) * cloudHeight
         table.insert(clouds, {
@@ -82,6 +81,20 @@ end
 
 local function isHalted()
     return halted or love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")
+end
+
+function love.resize(w, h)
+    drawScale = h/900
+    gridSize = math.floor(40 * drawScale)
+    backgroundSize = 100 * gridSize
+    rocketHeight = backgroundSize * 1.5
+    ufoHeight = backgroundSize * 1.25
+
+    markerFont = love.graphics.newFont(24 * drawScale)
+    scoreFont = love.graphics.newFont(40 * drawScale)
+
+    scoreMarkerText:setFont(markerFont)
+    heightMarkerText:setFont(markerFont)
 end
 
 function love.keypressed(key)
@@ -147,7 +160,7 @@ function love.update(dt)
 
     for i = 1, #clouds do
         local cloud = clouds[i]
-        cloud.x = cloud.x + 200 * dt
+        cloud.x = cloud.x + winW/8.0 * dt
         if cloud.x / cloud.z > winW then
             cloud.x = cloud.x - winW * cloud.z * 1.2
         end
@@ -220,25 +233,28 @@ function love.draw()
 
         -- draw other background elements
         -- clouds
+        local cloudsY = -backgroundSize * 0.4
         for i = 1, #clouds do
             local cloud = clouds[i]
             local cloudAlpha = 1.0
             lg.setColor(lerpColor({1, 1, 1, cloudAlpha}, {0.8, 0.8, 1.0, cloudAlpha}, (cloud.z - 1.0) / 1.0))
             --lg.setColor(cloud.debugColor)
             local x = cloud.x / cloud.z - winW/2
-            local y = -camY + (cloud.y + camY) / cloud.z
-            local h = cloud.h / cloud.z
-            local w = cloud.w / cloud.z
+            local y = -camY + (cloud.y + cloudsY + camY) / cloud.z
+            local w = math.floor(cloud.w / cloud.z * drawScale)
+            local h = math.floor(cloud.h / cloud.z * drawScale)
             lg.rectangle("fill", x, y, w, h)
             --local offset = h * 0.5
             --lg.rectangle("fill", x + offset, y - offset, w - 2*offset, h + 2*offset)
         end
 
         -- moon
+        local moonHeight = backgroundSize * 0.96
         lg.setColor(0.6, 0.6, 0.6)
         lg.push()
             local moonZ = 1.5
             lg.translate(-leftEdge + 100, -moonHeight / moonZ - camY * (1 - 1/moonZ))
+            lg.scale(drawScale)
             lg.rectangle("fill", -25, 25, 350, 250)
             lg.rectangle("fill", 25, -25, 250, 350)
             lg.setColor(0.3, 0.3, 0.3)
@@ -254,6 +270,7 @@ function love.draw()
             local ufoY = -backgroundSize * 0.2
             lg.push()
                 lg.translate(ufoPosition, -ufoHeight)
+                lg.scale(drawScale)
                 lg.rotate(-0.1 * math.pi)
                 lg.setColor(0.8, 0.8, 0.8) -- disc
                 lg.rectangle("fill", 0, 0, 300, 60)
@@ -272,7 +289,7 @@ function love.draw()
             lg.push()
                 lg.translate(rocketPosition, -rocketHeight)
                 lg.rotate(-rocketAngle + math.pi * 0.5)
-                lg.scale(3)
+                lg.scale(3 * drawScale)
                 lg.setColor(1, 1, 1)
                 local fireFrame = fireFrames[(love.timer.getTime() % 0.5) > 0.25 and 1 or 2]
                 lg.draw(tetrisRocket, 0, 0, 0, 1, 1, tetrisRocket:getWidth()/2, tetrisRocket:getHeight()/2)
