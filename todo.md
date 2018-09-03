@@ -1,5 +1,4 @@
 # Stretch goals
-* minimap/zoomout
 * gamepad support
 * ufo -> glitch shader
 
@@ -10,4 +9,3 @@
 * height-dependent block color?
 * (use spritebatch for grid rendering)
 * outlines for blocks
-* text shadow?

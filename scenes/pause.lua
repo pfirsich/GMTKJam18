@@ -38,7 +38,7 @@ function pause.draw()
     local lg = love.graphics
     local winW, winH = lg.getDimensions()
 
-    scenes.game.draw(nil, true)
+    scenes.game.draw(nil, true, true)
 
     lg.setColor(1, 1, 1)
     lg.setFont(pauseFont)

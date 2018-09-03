@@ -116,6 +116,9 @@ function game.resize(w, h)
     scoreMarkerText:setFont(markerFont)
     heightMarkerText:setFont(markerFont)
 
+    heightMarkerText:clear()
+    heightMarkerInText = {}
+
     rebuildMarkerText()
 end
 
@@ -175,7 +178,7 @@ function game.updateGimmicks(dt)
         local cloud = clouds[i]
         cloud.x = cloud.x + winW/8.0 * dt
         if cloud.x / cloud.z > winW then
-            cloud.x = cloud.x - winW * cloud.z * 1.2
+            cloud.x = cloud.x - winW * cloud.z
         end
     end
 end
@@ -223,36 +226,51 @@ local function lerpColor(a, b, t)
     return ret
 end
 
-function game.draw(_camY, hideScoreText)
+function game.draw(_camY, hideScoreText, zoomOut)
     local lg = love.graphics
     local winW, winH = lg.getDimensions()
     local markerFontH = markerFont:getHeight()
 
+    local zoomOutScale = 1.0
+    if zoomOut then
+        zoomOutScale = winH / math.max(winH, (grid.top + 3) * gridSize)
+    end
+
     _camY = _camY or camY -- give the possibility to override as argument
+    if zoomOut then
+        _camY = winH/2 - gridSize * zoomOutScale
+    end
 
     local drawCamY = math.floor(winH/2 + _camY + 0.5)
 
     local atmosphereTop = drawCamY - backgroundSize
     starRng:setSeed(42 + drawCamY)
-    for i = 1, #stars do
-        local star = stars[i]
-        local x, y = math.floor(star.x * winW - star.size/2), math.floor(star.y * winH - star.size/2)
-        local twinkle = starRng:random()
-        if y < atmosphereTop then
-            twinkle = 1.0
-        else
-            local bgH = backgroundImageData:getHeight()
-            local bgY = math.floor(clamp((y - atmosphereTop) / backgroundSize) * (bgH - 1))
-            local twinkleAmount = select(4, backgroundImageData:getPixel(0, bgY))
-            twinkle = twinkleAmount * twinkle + (1.0 - twinkleAmount)
+    lg.push()
+        --lg.translate((1 - zoomOutScale) / 2.0 * winW, 0)
+        for i = 1, #stars do
+            local star = stars[i]
+            local size = star.size
+            local xScale = 1.0 --zoomOutScale
+            local x = math.floor(star.x * winW * xScale - size/2)
+            local y = math.floor(star.y * winH - size/2)
+            local twinkle = starRng:random()
+            if y < atmosphereTop then
+                twinkle = 1.0
+            else
+                local bgH = backgroundImageData:getHeight()
+                local bgY = math.floor(clamp((y - atmosphereTop) / backgroundSize) * (bgH - 1))
+                local twinkleAmount = select(4, backgroundImageData:getPixel(0, bgY))
+                twinkle = twinkleAmount * twinkle + (1.0 - twinkleAmount)
+            end
+            lg.setColor(twinkle, twinkle, twinkle)
+            lg.rectangle("fill", x, y, size, size)
         end
-        lg.setColor(twinkle, twinkle, twinkle)
-        lg.rectangle("fill", x, y, star.size, star.size)
-    end
+    lg.pop()
 
     lg.push()
         local leftEdge = -grid.width/2 * gridSize
         lg.translate(winW/2, drawCamY)
+        lg.scale(1, zoomOutScale)
 
         -- draw background
         lg.push()
@@ -263,21 +281,40 @@ function game.draw(_camY, hideScoreText)
             lg.draw(backgroundImage, 0, -imgH)
         lg.pop()
 
+        lg.scale(zoomOutScale, 1)
+
         -- draw other background elements
         -- clouds
-        local cloudsY = -backgroundSize * 0.4
-        for i = 1, #clouds do
-            local cloud = clouds[i]
-            local cloudAlpha = 1.0
-            lg.setColor(lerpColor({1, 1, 1, cloudAlpha}, {0.8, 0.8, 1.0, cloudAlpha}, (cloud.z - 1.0) / 1.0))
-            --lg.setColor(cloud.debugColor)
-            local x = cloud.x / cloud.z - winW/2
-            local y = -_camY + (cloud.y + cloudsY + _camY) / cloud.z
-            local w = math.floor(cloud.w / cloud.z * drawScale)
-            local h = math.floor(cloud.h / cloud.z * drawScale)
-            lg.rectangle("fill", x, y, w, h)
-            --local offset = h * 0.5
-            --lg.rectangle("fill", x + offset, y - offset, w - 2*offset, h + 2*offset)
+        local cloudRepetitions = math.floor(1/zoomOutScale + 1)
+        for c = 1, #clouds do
+            local cloud = clouds[c]
+            for r = 1, cloudRepetitions do
+                local offset = (r - 1) * winW
+
+                -- for the first one, only render the center
+                -- for all further ones, render left and right
+                -- and then render one extra on the left (the extra is the +1 in cloudRepetitions)
+                local sideFrom, sideTo, sideStep = 0, 0, 1
+                if r == cloudRepetitions then
+                    sideFrom, sideTo, sideStep = -1, -1, 1
+                elseif r > 1 then
+                    sideFrom, sideTo, sideStep = -1, 1, 2
+                end
+
+                for s = sideFrom, sideTo, sideStep do
+                    local cloudsY = -backgroundSize * 0.4
+                    local cloudAlpha = 1.0
+                    lg.setColor(lerpColor({1, 1, 1, cloudAlpha},
+                                          {0.8, 0.8, 1.0, cloudAlpha},
+                                          (cloud.z - 1.0) / 1.0))
+                    local x = cloud.x / cloud.z - winW/2
+                    x = x + offset * s
+                    local y = -_camY + (cloud.y + cloudsY + _camY) / cloud.z
+                    local w = math.floor(cloud.w / cloud.z * drawScale)
+                    local h = math.floor(cloud.h / cloud.z * drawScale)
+                    lg.rectangle("fill", x, y, w, h)
+                end
+            end
         end
 
         -- moon
@@ -298,7 +335,7 @@ function game.draw(_camY, hideScoreText)
         lg.pop()
 
         -- ufo
-        if ufoPosition then
+        if ufoPosition and ufoPosition > -winW/2*1.5 then
             local ufoY = -backgroundSize * 0.2
             lg.push()
                 lg.translate(ufoPosition, -ufoHeight)
@@ -317,7 +354,7 @@ function game.draw(_camY, hideScoreText)
         end
 
         -- rocket
-        if rocketPosition then
+        if rocketPosition and rocketPosition < winW/2*1.5 then
             lg.push()
                 lg.translate(rocketPosition, -rocketHeight)
                 lg.rotate(-rocketAngle + math.pi * 0.5)
@@ -365,9 +402,11 @@ function game.draw(_camY, hideScoreText)
             end
         end
 
-        lg.setColor(1, 1, 1)
-        love.graphics.draw(scoreMarkerText)
-        love.graphics.draw(heightMarkerText)
+        if not zoomOut then
+            lg.setColor(1, 1, 1)
+            love.graphics.draw(scoreMarkerText)
+            love.graphics.draw(heightMarkerText)
+        end
 
         -- draw shadow
         -- local shadowLerp = clamp((camY - backgroundSize * 0.6) / (backgroundSize * 0.1))
