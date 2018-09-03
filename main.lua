@@ -2,6 +2,7 @@ inspect = require("inspect") -- global for convenience
 require("globalUtil") -- ugh
 
 local scenes = require("scenes")
+local sounds = require("sounds")
 
 -- global because it's 2h before deadline and everything sucks
 drawScale = 1
@@ -32,6 +33,13 @@ function love.keypressed(key)
         toggleFullscreen()
     end
     if key == "m" then
+        local newVolume = 1.0 - sounds.music.volume
+        sounds.music:setVolume(newVolume)
+        if newVolume > 1e5 then
+            love.audio.setVolume(1.0)
+        end
+    end
+    if key == "n" then
         local volume = love.audio.getVolume()
         love.audio.setVolume(1.0 - volume)
     end

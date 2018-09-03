@@ -14,8 +14,8 @@ prepareSound("lineFull", "linefull.ogg")
 prepareSound("rocket", "rocket.ogg")
 prepareSound("ufo", "ufo.ogg")
 
-local music = love.audio.newSource("media/tetrizzle.ogg", "static")
-music:setLooping(true)
-music:play()
+sounds.music = love.audio.newSource("media/tetrizzle.ogg", "static")
+sounds.music:setLooping(true)
+sounds.music:play()
 
 return sounds

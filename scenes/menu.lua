@@ -25,6 +25,10 @@ Change Speed = Page Up/Page Down]]
 
 local controlsImage = love.graphics.newImage("media/controls.png")
 
+local toggles = [[M to toggle audio
+N to toggle music
+F11 to toggle fullscreen]]
+
 local menuFirstEnterTime
 local controlReadDuration = 5.0
 
@@ -73,8 +77,8 @@ function menu.draw()
     local creditsY = math.floor(winH - creditFontH * 2 - 10)
     shadowText(credits, 10, creditsY, 1)
 
-    local toggleY = math.floor(winH - creditFontH - 10)
-    shadowTextFRight("F11 to toggle fullscreen", 0, toggleY, winW - 10, 1)
+    local toggleY = math.floor(winH - creditFontH * 3 - 10)
+    shadowTextFRight(toggles, 0, toggleY, winW - 10, 1)
 
     local deltaRead = controlReadPercent()
     local startGameFontH = startGameFont:getHeight()
