@@ -1,8 +1,5 @@
-# Stretch goals
-* gamepad support
-* ufo -> glitch shader
-
 # Probably not
+* ufo -> glitch shader
 * creative mode: choose the next block and export as photo
 * particles (block spawn, block land, rotation?)
 * asteroids
