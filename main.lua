@@ -36,3 +36,11 @@ function love.keypressed(key)
         love.audio.setVolume(1.0 - volume)
     end
 end
+
+function love.gamepadpressed(...)
+    scenes.callCurrent("gamepadpressed", ...)
+end
+
+function love.gamepadaxis(...)
+    scenes.callCurrent("gamepadaxis", ...)
+end

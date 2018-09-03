@@ -152,6 +152,56 @@ function game.keypressed(key)
     end
 end
 
+function game.gamepadpressed(joystick, button)
+    if button == "a" or button == "dpup" then
+        game.keypressed("up")
+    elseif button == "dpdown" then
+        game.keypressed("down")
+    elseif button == "dpleft" then
+        game.keypressed("left")
+    elseif button == "dpright" then
+        game.keypressed("right")
+    elseif button == "x" then
+        game.keypressed("lctrl")
+    elseif button == "b" then
+        game.keypressed("space")
+    end
+end
+
+local lastAxis = {}
+local axisFresh = {}
+function game.gamepadaxis(joystick, axis, value)
+    local id = joystick:getID()
+    lastAxis[id] = lastAxis[id] or {}
+    axisFresh[id] = axisFresh[id] or {}
+
+    local pressThresh = 0.7
+    local freshThresh = 0.4
+    local lastAbsValue = math.abs(lastAxis[id][axis] or 0)
+    lastAxis[id][axis] = value
+    if math.abs(value) < freshThresh then
+        axisFresh[id][axis] = true
+    end
+    local pressed = math.abs(value) >= pressThresh and lastAbsValue < pressThresh and axisFresh[id][axis]
+
+    if pressed then
+        axisFresh[id][axis] = false
+        if axis == "leftx" then
+            if value > 0 then
+                game.keypressed("right")
+            else
+                game.keypressed("left")
+            end
+        elseif axis == "lefty" then
+            if value > 0 then
+                game.keypressed("down")
+            else
+                game.keypressed("up")
+            end
+        end
+    end
+end
+
 function game.updateGimmicks(dt)
     local winW, winH = love.graphics.getDimensions()
 
