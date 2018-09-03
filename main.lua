@@ -31,4 +31,8 @@ function love.keypressed(key)
     if key == "f11" then
         toggleFullscreen()
     end
+    if key == "m" then
+        local volume = love.audio.getVolume()
+        love.audio.setVolume(1.0 - volume)
+    end
 end
